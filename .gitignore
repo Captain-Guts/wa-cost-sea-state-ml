@@ -1,0 +1,9 @@
+data/wrf/
+data/era5_extracted/
+data/era5_stations/
+data/ndbc_stations/
+data/merged/
+data/ndbc/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
