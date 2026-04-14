@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
 
 Merged_DIR = 'data/merged'
 Model_DIR = 'models'
@@ -61,6 +62,9 @@ def evaluate_station(station, targets, features):
             diff = np.minimum(diff, 360 - diff)
             mae = diff.mean()
             rmse = np.sqrt((diff**2).mean())
+            r2 = None
+            model_for_importance = model_sin
+            X_test_for_importance = X_test
 
         else:
             mask = y[target].notna()
@@ -76,14 +80,21 @@ def evaluate_station(station, targets, features):
             y_pred = model.predict(X_test)
             mae = np.abs(y_pred - y_test).mean()
             rmse = np.sqrt(((y_pred - y_test)**2).mean())
+            r2 = r2_score(y_test, y_pred)
+            model_for_importance = model
+            X_test_for_importance = X_test
 
-        print(f"  {target}: MAE={mae:.3f}  RMSE={rmse:.3f}")
+        r2_str = f"  R²={r2:.3f}" if r2 is not None else ""
+        print(f"  {target}: MAE={mae:.3f}  RMSE={rmse:.3f}{r2_str}")
         results[target] = {
             'y_test': y_test,
             'y_pred': y_pred,
             'ts_test': ts_test,
             'mae': mae,
-            'rmse': rmse
+            'rmse': rmse,
+            'r2': r2,
+            'model': model_for_importance,
+            'feature_names': list(X_test_for_importance.columns)
         }
 
     return results
@@ -107,7 +118,8 @@ def plot_scatter(station, targets, results):
 
         ax.set_xlabel(f'Observed {target}')
         ax.set_ylabel(f'Predicted {target}')
-        ax.set_title(f'{station} — {target}\nMAE={r["mae"]:.3f}  RMSE={r["rmse"]:.3f}')
+        r2_str = f"  R²={r['r2']:.3f}" if r['r2'] is not None else ""
+        ax.set_title(f'{station} — {target}\nMAE={r["mae"]:.3f}  RMSE={r["rmse"]:.3f}{r2_str}')
         ax.legend()
 
     plt.tight_layout()
@@ -127,7 +139,6 @@ def plot_timeseries(station, targets, results, window_days=30):
         y_test = pd.Series(r['y_test'].values, index=ts)
         y_pred = pd.Series(r['y_pred'], index=ts)
 
-        # Take first window_days of test set
         cutoff = ts[0] + pd.Timedelta(days=window_days)
         y_test_window = y_test[y_test.index <= cutoff]
         y_pred_window = y_pred[y_pred.index <= cutoff]
@@ -152,7 +163,8 @@ def plot_metrics_table(all_results):
                 'Station': station,
                 'Variable': target,
                 'MAE': round(r['mae'], 3),
-                'RMSE': round(r['rmse'], 3)
+                'RMSE': round(r['rmse'], 3),
+                'R²': round(r['r2'], 3) if r['r2'] is not None else 'N/A'
             })
 
     df = pd.DataFrame(rows)
@@ -160,8 +172,8 @@ def plot_metrics_table(all_results):
     print(df.to_string(index=False))
     df.to_csv(os.path.join(Output_DIR, 'metrics_summary.csv'), index=False)
     print(f"\n  Metrics table saved: {Output_DIR}/metrics_summary.csv")
-    
-    fig, ax = plt.subplots(figsize=(8, len(rows) * 0.5 + 1))
+
+    fig, ax = plt.subplots(figsize=(10, len(rows) * 0.5 + 1))
     ax.axis('off')
     table = ax.table(
         cellText=df.values,
@@ -177,6 +189,30 @@ def plot_metrics_table(all_results):
     plt.savefig(os.path.join(Output_DIR, 'metrics_summary.png'), dpi=150)
     plt.show()
     print(f"  Metrics table figure saved: {Output_DIR}/metrics_summary.png")
+
+def plot_feature_importance(station, targets, results):
+    n = len(targets)
+    fig, axes = plt.subplots(1, n, figsize=(6 * n, 5))
+    if n == 1:
+        axes = [axes]
+
+    for ax, target in zip(axes, targets):
+        r = results[target]
+        model = r['model']
+        feature_names = r['feature_names']
+        importances = model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+
+        ax.bar(range(len(importances)), importances[indices], color='steelblue')
+        ax.set_xticks(range(len(importances)))
+        ax.set_xticklabels([feature_names[i] for i in indices], rotation=45, ha='right')
+        ax.set_title(f'{station} — {target}\nFeature Importance')
+        ax.set_ylabel('Importance')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(Output_DIR, f"{station}_feature_importance.png"), dpi=150)
+    plt.show()
+    print(f"  Feature importance plot saved: {Output_DIR}/{station}_feature_importance.png")
 
 def plot_seasonal(station, targets, results):
     season_map = {12: 'Winter', 1: 'Winter', 2: 'Winter',
@@ -229,6 +265,7 @@ if __name__ == '__main__':
         plot_scatter(station, Buoy_targets, results)
         plot_timeseries(station, Buoy_targets, results)
         plot_seasonal(station, Buoy_targets, results)
+        plot_feature_importance(station, Buoy_targets, results)
         all_results.append((station, Buoy_targets, results))
 
     print("\n LAND STATIONS")
@@ -237,6 +274,7 @@ if __name__ == '__main__':
         plot_scatter(station, Land_targets, results)
         plot_timeseries(station, Land_targets, results)
         plot_seasonal(station, Land_targets, results)
+        plot_feature_importance(station, Land_targets, results)
         all_results.append((station, Land_targets, results))
 
     print("\n METRICS SUMMARY")
