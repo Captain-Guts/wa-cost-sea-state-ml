@@ -7,3 +7,4 @@ data/ndbc/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+models/

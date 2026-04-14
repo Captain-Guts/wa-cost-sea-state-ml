@@ -7,7 +7,7 @@ os.makedirs(Out_Dir, exist_ok = True)
 
 c = cdsapi.Client()
 
-Area = [49,-126,46,-123]
+Area = [49,-126,45.5,-123]
 years = ['2021','2022','2023']
 
 VARIABLES = [
