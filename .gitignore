@@ -8,3 +8,7 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 models/
+models_gbm/
+predict_output/
+forecast_output/
+.cache.sqlite
