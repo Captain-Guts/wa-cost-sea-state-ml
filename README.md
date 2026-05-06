@@ -1,4 +1,4 @@
-# wa-cost-sea-state-ml
+# wa-coast-sea-state-ml
 This project consist in creating a ML model to predict sea state and precipitation along the Washigton coast, this project has been adapted from [Sea Ml](https://github.com/granantuin/sea-ml) methodology.
 
 ## Overview
