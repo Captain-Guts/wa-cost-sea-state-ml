@@ -61,7 +61,7 @@ Station-specific models (Random Forest and XGBoost/GBM) are trained on ERA5 rean
 | `v10` | 10m meridional wind | All |
 | `sp` | Surface pressure | All |
 | `t2m` | 2m air temperature | All |
-| `tp` | Total precipitation | All |
+| `tp` | Total precipitation (input only — not predicted) | All |
 
 ## Usage
 
