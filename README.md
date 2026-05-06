@@ -4,7 +4,7 @@ Machine learning pipeline for predicting sea state and coastal weather condition
 
 ## Overview
 
-Station-specific models (Random Forest and XGBoost/GBM) are trained on ERA5 reanalysis data to forecast key oceanographic and meteorological variables at NDBC buoy and coastal weather stations along the Washington coast — one of the most active commercial fishing regions in North America.
+Station-specific models (Random Forest and XGBoost/GBM) are trained on ERA5 reanalysis data to forecast key oceanographic and meteorological variables at NDBC buoy and coastal weather stations along the Washington coast one of the most active commercial fishing regions in North America.
 
 **Forecast horizons:** 0–24 h and 24–48 h
 
